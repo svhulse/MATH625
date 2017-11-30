@@ -1,21 +1,65 @@
 #include <stdio.h>
 #include <math.h>
 #include <suitesparse/umfpack.h>
+#include "poisson.h"
+#include "twb-quad.h"
 #include "array.h"
 #include "mesh.h"
 
 void error_and_exit(int status, const char *file, int line)
 {
-	switch(status)
-	case (status == UMFPACK_ERROR_out_of_memory)
-		fprintf(stderr, "*** file %s, line %d: "
+	switch (status)
+        {
+	        case UMFPACK_ERROR_out_of_memory:
+		        fprintf(stderr, "*** file %s, line %d: "
 				"UMFPACK out of memory\n", file, line);
-	case (status == UMFPACK_WARNING_singular_matrix)
-		fprintf(stderr, "*** file %s, line %d: "
+	        case UMFPACK_WARNING_singular_matrix:
+		        fprintf(stderr, "*** file %s, line %d: "
 				"UMFPACK recieved singular matrix\n", file, line);
-	case
-		fprintf(stderr, "*** file %s, line %d: "
+	        default:
+		        fprintf(stderr, "*** file %s, line %d: "
 				"trouble in UMFPACK call\n", file, line);
+        }
+}
+
+static void enforce_zero_dirichlet_bc(struct elem *ep,
+        double k[3][4])
+{
+        for (int i = 0; i < 3; i++) {
+                if (ep->n[i]->bc == FEM_BC_DIRICHLET) {
+                        for (int j = 0; j < 3; j++) {
+                                k[i][j] = 0;
+                                k[j][i] = 0;
+                        }
+                        k[i][3] = 0;
+                        k[i][i] = 1;
+
+                }
+        }
+}
+
+static void compute_element_stiffness(struct elem *ep,
+        struct TWB_qdat *qdat,
+        double (*f)(double x, double y), double k[3][4])
+{
+        double x[3], y[3];
+        double sum = 0.0;
+        
+        for (int i = 0; i < 3; i++) {
+                x[i] = ep->n[i]->x;
+                y[i] = ep->n[i]->y;
+        }
+
+        while (qdat->weight != -1) {
+                double lambda[3];
+                lambda[0] = qdat->lambda1;
+                lambda[1] = qdat->lambda2;
+                lambda[2] = qdat->lambda3;
+                double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
+                double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
+                sum += qdat->weight * f(X, Y);
+                qdat++;
+        }
 }
 
 void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
@@ -70,7 +114,7 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
                         mesh->nnodes * mesh->nnodes,
                         Ap[mesh->nnodes]);
         
-        // symbolic analysis
+        //symbolic analysis
         status = umfpack_di_symbolic(
                         mesh->nnodes, mesh->nnodes,
                         Ap, Ai, Ax, &Symbolic, NULL, NULL);
@@ -78,14 +122,20 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
                 error_and_exit(status, __FILE__, __LINE__);
 
         
-        // numeric analysis
+        //numeric analysis
         status = umfpack_di_numeric(
-		mesh->nnodes, mesh->nnodes,
-		Ap, Ai, Ax, &Numeric, NULL);
+		Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
 	if (status != UMFPACK_OK)
 		exit_and_exit(status, __FILE__, __LINE__);
 
-	for (i = 0; i <mesh->nnodes; i++)
+        //solve the system
+        status = umfpack_di_solve(UMFPACK_A,
+                Ap, Ai, Ax, U, F, Numeric, NULL, NULL);
+                
+	if (status != UMFPACK_OK)
+		exit_and_exit(status, __FILE__, __LINE__);
+
+	for (i = 0; i < mesh->nnodes; i++)
 		mesh->nodes[i].z = U[i];
 
 	free_vector(Ti);
