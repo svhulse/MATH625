@@ -50,6 +50,12 @@ static void compute_element_stiffness(struct elem *ep,
                 y[i] = ep->n[i]->y;
         }
 
+        for (int i = 0; i <3; i++)
+                for (int j = 0; j < 4; j++)
+                        k[i][j] = 0;
+        
+        
+
         while (qdat->weight != -1) {
                 double lambda[3];
                 lambda[0] = qdat->lambda1;
@@ -150,6 +156,14 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
 	umfpack_di_free_numeric(&Numeric);
 }
 
+static struct errors element_errors(struct problem_spec *spec,
+        struct TWB_qdat *qdat, struct elem *ep)
+{
+        struct errors elem_errors;
+
+        return elem_errors;
+}
+
 struct errors eval_errors(struct problem_spec *spec,
 		struct mesh *mesh, int d)
 {
@@ -157,7 +171,7 @@ struct errors eval_errors(struct problem_spec *spec,
 	struct TWB_qdat *qdat = twb_qdat(&d, NULL);
 	errs.Linfty = errs.L2norm = errs.energy = 0.0;
 	for (int i = 0; i < mesh->nelems; i++) {
-		struct elem *ep = &mesh->elem[i];
+		struct elem *ep = &mesh->elems[i];
 		struct errors elem_errs = element_errors(spec, qdat, ep);
 		errs.L2norm += elem_errs.L2norm;
 		errs.energy += elem_errs.energy;
