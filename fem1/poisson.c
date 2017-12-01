@@ -33,7 +33,6 @@ static void enforce_zero_dirichlet_bc(struct elem *ep,
                         }
                         k[i][3] = 0;
                         k[i][i] = 1;
-
                 }
         }
 }
@@ -50,11 +49,9 @@ static void compute_element_stiffness(struct elem *ep,
                 y[i] = ep->n[i]->y;
         }
 
-        for (int i = 0; i <3; i++)
+        for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 4; j++)
                         k[i][j] = 0;
-        
-        
 
         while (qdat->weight != -1) {
                 double lambda[3];
@@ -63,9 +60,14 @@ static void compute_element_stiffness(struct elem *ep,
                 lambda[2] = qdat->lambda3;
                 double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
                 double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
-                sum += qdat->weight * f(X, Y);
+                
+                for (int i = 0; i < 3; i++)
+                        k[i][3] += qdat->weight * f(X, Y) * lambda[i];
                 qdat++;
         }
+
+        for (int i = 0; i < 3; i++)
+                k[i][3] = (ep->area / TWB_STANDARD_AREA) * k[i][3];
 }
 
 void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
