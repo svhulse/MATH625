@@ -2,6 +2,7 @@
 #include <math.h>
 #include <suitesparse/umfpack.h>
 #include "poisson.h"
+#include "triangle.h"
 #include "twb-quad.h"
 #include "array.h"
 #include "mesh.h"
@@ -13,12 +14,20 @@ void error_and_exit(int status, const char *file, int line)
 	        case UMFPACK_ERROR_out_of_memory:
 		        fprintf(stderr, "*** file %s, line %d: "
 				"UMFPACK out of memory\n", file, line);
+			exit(EXIT_FAILURE);
+			break;
+
 	        case UMFPACK_WARNING_singular_matrix:
 		        fprintf(stderr, "*** file %s, line %d: "
 				"UMFPACK recieved singular matrix\n", file, line);
+			exit(EXIT_FAILURE);
+			break;
+
 	        default:
 		        fprintf(stderr, "*** file %s, line %d: "
 				"trouble in UMFPACK call\n", file, line);
+			exit(EXIT_FAILURE);
+			break;
         }
 }
 
@@ -134,14 +143,14 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
         status = umfpack_di_numeric(
 		Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
 	if (status != UMFPACK_OK)
-		exit_and_exit(status, __FILE__, __LINE__);
+		error_and_exit(status, __FILE__, __LINE__);
 
         //solve the system
         status = umfpack_di_solve(UMFPACK_A,
                 Ap, Ai, Ax, U, F, Numeric, NULL, NULL);
                 
 	if (status != UMFPACK_OK)
-		exit_and_exit(status, __FILE__, __LINE__);
+		error_and_exit(status, __FILE__, __LINE__);
 
 	for (i = 0; i < mesh->nnodes; i++)
 		mesh->nodes[i].z = U[i];
@@ -161,7 +170,41 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
 static struct errors element_errors(struct problem_spec *spec,
         struct TWB_qdat *qdat, struct elem *ep)
 {
-        struct errors elem_errors;
+	double x[3], y[3];
+        double u_fem = 0.0;
+	double u_exact = 0.0;
+
+	struct errors elem_errors;
+	elem_errors.Linfty = elem_errors.L2norm = elem_errors.energy = 0.0;
+        
+        for (int i = 0; i < 3; i++) {
+                x[i] = ep->n[i]->x;
+                y[i] = ep->n[i]->y;
+        }
+
+        while (qdat->weight != -1) {
+                double lambda[3];
+                lambda[0] = qdat->lambda1;
+                lambda[1] = qdat->lambda2;
+                lambda[2] = qdat->lambda3;
+                double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
+                double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
+
+                for (int i = 0; i < 3; i++) {
+			u_exact += spec->u_exact(X, Y);
+                	u_fem += lambda[i] * ep->n[i]->z;
+		}
+
+		elem_errors.L2norm += pow(fabs(u_exact - u_fem), 2.0);
+		elem_errors.energy += (u_exact - u_fem) * spec->f(X, Y);
+
+                if (abs(u_exact - u_fem) > elem_errors.Linfty)
+			elem_errors.Linfty = fabs(u_exact - u_fem);
+		qdat++;
+        }
+
+	elem_errors.L2norm *= ep->area / TWB_STANDARD_AREA;
+	elem_errors.energy *= ep->area / TWB_STANDARD_AREA;
 
         return elem_errors;
 }

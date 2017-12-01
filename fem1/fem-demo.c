@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "poisson.h"
 #include "mesh.h"
+#include "twb-quad.h"
+#include "plot-with-geomview.h"
 
 static void do_demo(struct problem_spec *spec,
     double a, int d, char *gv_filename)
@@ -31,3 +33,34 @@ void show_usage(char *progname)
 }
 
 int main(int argc, char **argv)
+{
+	int d;
+	char *endptr;
+	double a;
+	struct problem_spec *spec;
+	void free_spec(struct problem_spec *spec);
+	struct problem_spec *triangle_with_hole(void);
+	struct problem_spec *square(void);
+	struct problem_spec *three_holes(int n);
+
+	if (argc != 3)
+		show_usage(argv[0]);
+
+	d = strtol(argv[1], &endptr, 10);
+	if (*endptr != '\0')
+		show_usage(argv[0]);
+
+	a = strtod(argv[2], &endptr);
+	if (*endptr != '\0' || a <= 0.0)
+		show_usage(argv[0]);
+
+	spec = square();
+	do_demo(spec, a, d, "square.gv");
+	free_spec(spec);
+	
+	spec = three_holes(20);
+	do_demo(spec, a, d, "three-holes.gv");
+	free_spec(spec);
+
+	return 0;
+}
