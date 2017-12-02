@@ -4,8 +4,8 @@ OFILES = fem-demo.o poisson.o plot-with-geomview.o mesh.o problem-spec.o twb-qua
 	 triangle.o
 TARGET = fem-demo
 
-$(TARGET): $(OFILES) triangle.o
-	$(CC) $(OFILES) triangle.o -o $@ -lm -lumfpack
+$(TARGET): $(OFILES)
+	$(CC) $(OFILES) -o $@ -lm -lumfpack
 
 clean:
 	rm -f $(OFILES) $(TARGET)
