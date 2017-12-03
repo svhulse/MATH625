@@ -15,19 +15,19 @@ void error_and_exit(int status, const char *file, int line)
 		        fprintf(stderr, "*** file %s, line %d: "
 				"UMFPACK out of memory\n", file, line);
 			exit(EXIT_FAILURE);
-			break;
+		break;
 
 	        case UMFPACK_WARNING_singular_matrix:
 		        fprintf(stderr, "*** file %s, line %d: "
 				"UMFPACK recieved singular matrix\n", file, line);
 			exit(EXIT_FAILURE);
-			break;
+		break;
 
 	        default:
 		        fprintf(stderr, "*** file %s, line %d: "
 				"trouble in UMFPACK call\n", file, line);
 			exit(EXIT_FAILURE);
-			break;
+		break;
         }
 }
 
@@ -93,7 +93,7 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
         int status;
         void *Symbolic = NULL;
         void *Numeric = NULL;
-        int i, j, r, s;
+        int s;
         struct TWB_qdat *qdat = twb_qdat(&d, NULL);
 
         make_vector(Ti, 3*3*mesh->nelems);
@@ -107,19 +107,19 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
 	make_vector(F, mesh->nnodes);
 	make_vector(U, mesh->nnodes);
 
-        for (i = 0; i < mesh->nnodes; i++)
+        for (int i = 0; i < mesh->nnodes; i++)
                 F[i] = 0.0;
 
         s = 0;
-        for (r = 0; r < mesh->nelems; r++) {
+        for (int r = 0; r < mesh->nelems; r++) {
                 struct elem *ep = &mesh->elems[r];
                 compute_element_stiffness(ep, qdat, spec->f, k);
                 enforce_zero_dirichlet_bc(ep, k);
-                for (i = 0; i < 3; i++) {
+                for (int i = 0; i < 3; i++) {
                         int I = ep->n[i]->nodeno;
-                        for (j = 0; j < 3; j++) {
+                        for (int j = 0; j < 3; j++) {
                                 if (k[i][j] != 0.0) {
-                                        int J = ep->n[i]->nodeno;
+                                        int J = ep->n[j]->nodeno;
                                         Ti[s] = I;
                                         Tj[s] = J;
                                         Tx[s] = k[i][j];
@@ -129,21 +129,23 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
                         F[I] += k[i][3];
                 }
         }
-        status = umfpack_di_triplet_to_col(mesh->nnodes, mesh->nnodes, s, 
-                        Ti, Tj, Tx, Ap, Ai, Ax, NULL);
+
+        status = umfpack_di_triplet_to_col(
+		mesh->nnodes, mesh->nnodes, s, 
+                Ti, Tj, Tx, Ap, Ai, Ax, NULL);
         if (status != UMFPACK_OK)
                 error_and_exit(status, __FILE__, __LINE__);
         
         printf("system stiffness matrix is %dx%d (=%d)"
-                        "has %d nonzero entries\n",
-                        mesh->nnodes, mesh->nnodes,
-                        mesh->nnodes * mesh->nnodes,
-                        Ap[mesh->nnodes]);
+                "has %d nonzero entries\n",
+                mesh->nnodes, mesh->nnodes,
+                mesh->nnodes * mesh->nnodes,
+                Ap[mesh->nnodes]);
         
         //symbolic analysis
         status = umfpack_di_symbolic(
-                        mesh->nnodes, mesh->nnodes,
-                        Ap, Ai, Ax, &Symbolic, NULL, NULL);
+                mesh->nnodes, mesh->nnodes,
+                Ap, Ai, Ax, &Symbolic, NULL, NULL);
         if (status != UMFPACK_OK)
                 error_and_exit(status, __FILE__, __LINE__);
 
@@ -161,7 +163,7 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
 	if (status != UMFPACK_OK)
 		error_and_exit(status, __FILE__, __LINE__);
 
-	for (i = 0; i < mesh->nnodes; i++)
+	for (int i = 0; i < mesh->nnodes; i++)
 		mesh->nodes[i].z = U[i];
 
 	free_vector(Ti);

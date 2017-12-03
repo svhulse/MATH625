@@ -3,22 +3,16 @@
 #include "array.h"
 #include "problem-spec.h"
 
-/*
+/* ----------------------------Square---------------------------------*/
+
 double square_f(double x, double y)
 {
-	return 36*x*y*(1-x)*(1-y);
+	return 32*(x*(1 - x) + y*(1 - y));
 }
 
-//Strength 9 Appears to be necesary for an exact solution
-double square_f(double x, double y)
+double square_u_exact(double x, double y)
 {
-	return (40/3)*x*(1-pow(x, 2))*y*(1-pow(y, 3));
-} */
-
-double square_f(double x, double y)
-{
-	double Pi = 4.0*atan(1.0);
-	return ((Pi*Pi)/4)*sin(Pi*x)*sin(Pi*y);
+	return 16*x*y*(1 - x)*(1 - y);
 }
 
 struct problem_spec *square(void)
@@ -48,7 +42,7 @@ struct problem_spec *square(void)
 		.g		= NULL,
 		.h		= NULL,
 		.eta		= NULL,
-		.u_exact	= NULL,
+		.u_exact	= square_u_exact,
 	};
 
 	printf("Square\n");
@@ -57,7 +51,7 @@ struct problem_spec *square(void)
 
 double three_holes_f(double x, double y)
 {
-	return pow(x, 2) + pow(y, 2);
+	return 100*(pow(x, 2) + pow(y, 2));
 }
 
 struct problem_spec *three_holes(int n)
@@ -147,8 +141,8 @@ struct problem_spec *three_holes(int n)
 	spec -> npoints 	= 3*n+6;
 	spec -> nsegments	= 3*n+6;
 	spec -> nholes		= 3;
-	spec -> f 			= three_holes_f;
-	spec -> g 			= NULL;
+	spec -> f 		= three_holes_f;
+	spec -> g 		= NULL;
 	spec -> eta 		= NULL;
 	spec -> u_exact 	= NULL;
 
@@ -160,7 +154,7 @@ struct problem_spec *three_holes(int n)
 
 double f_triangle_with_hole(double x, double y)
 {
-	return 2.0/5*x*y*(2-x)*(2-y);
+	return 30*x*y*(2-x)*(2-y);
 }
 
 struct problem_spec *triangle_with_hole(void)
@@ -205,6 +199,14 @@ struct problem_spec *triangle_with_hole(void)
 
 	printf("Triangle with a hole\n");
 	return &spec;
+}
+
+/* ----------------------------Annulus----------------------------------*/
+
+double f_annulus(double x, double y)
+{
+	double t = atan2(y, x);
+	return 20*cos(3*t);
 }
 
 struct problem_spec *annulus(int n)
