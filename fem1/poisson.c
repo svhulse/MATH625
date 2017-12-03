@@ -51,22 +51,15 @@ static void compute_element_stiffness(struct elem *ep,
         double (*f)(double x, double y), double k[3][4])
 {
         double x[3], y[3];
+
+        for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 4; j++)
+                        k[i][j] = 0;
         
         for (int i = 0; i < 3; i++) {
                 x[i] = ep->n[i]->x;
                 y[i] = ep->n[i]->y;
         }
-
-        for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 4; j++)
-                        k[i][j] = 0;
-
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			k[i][j] = (1 / 4*ep->area);
-			k[i][j] *= ep->ex[i] * ep->ex[j] + ep->ey[i] * ep->ey[j];
-		}
-	}
 
         while (qdat->weight != -1) {
                 double lambda[3];
@@ -82,7 +75,14 @@ static void compute_element_stiffness(struct elem *ep,
         }
 
         for (int i = 0; i < 3; i++)
-                k[i][3] = (ep->area / TWB_STANDARD_AREA) * k[i][3];
+                k[i][3] *= ep->area / TWB_STANDARD_AREA;
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			k[i][j] = (1 / 4*ep->area);
+			k[i][j] *= ep->ex[i] * ep->ey[j];
+		}
+	}
 }
 
 void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
