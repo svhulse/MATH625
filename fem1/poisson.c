@@ -23,7 +23,7 @@ void error_and_exit(int status, const char *file, int line)
 			exit(EXIT_FAILURE);
 		break;
 
-	        default:
+		default:
 		        fprintf(stderr, "*** file %s, line %d: "
 				"trouble in UMFPACK call\n", file, line);
 			exit(EXIT_FAILURE);
@@ -52,8 +52,7 @@ static void compute_element_stiffness(struct elem *ep,
         double x[3], y[3];
 
         for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 4; j++)
-                        k[i][j] = 0;
+		k[i][3] = 0;
         
         for (int i = 0; i < 3; i++) {
                 x[i] = ep->n[i]->x;
@@ -67,7 +66,7 @@ static void compute_element_stiffness(struct elem *ep,
                 lambda[2] = qdat->lambda3;
                 double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
                 double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
-                
+	
                 for (int i = 0; i < 3; i++)
                         k[i][3] += qdat->weight * f(X, Y) * lambda[i];
                 qdat++;
@@ -78,7 +77,7 @@ static void compute_element_stiffness(struct elem *ep,
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			k[i][j] = 1.0 / 4*ep->area;
+			k[i][j] = 1.0 / fabs(4*ep->area);
 			k[i][j] *= ep->ex[i]*ep->ex[j] + ep->ey[i]*ep->ey[j];
 		}
 	}
@@ -93,7 +92,7 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
         void *Symbolic = NULL;
         void *Numeric = NULL;
         int s;
-        struct TWB_qdat *qdat = twb_qdat(&d, NULL);
+        struct TWB_qdat *qdat = twb_qdat(&d, NULL);	
 
         make_vector(Ti, 3*3*mesh->nelems);
         make_vector(Tj, 3*3*mesh->nelems);
@@ -105,11 +104,12 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
 
 	make_vector(F, mesh->nnodes);
 	make_vector(U, mesh->nnodes);
-
+	
         for (int i = 0; i < mesh->nnodes; i++)
                 F[i] = 0.0;
 
         s = 0;
+	
         for (int r = 0; r < mesh->nelems; r++) {
                 struct elem *ep = &mesh->elems[r];
                 compute_element_stiffness(ep, qdat, spec->f, k);
@@ -136,7 +136,7 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
         if (status != UMFPACK_OK)
                 error_and_exit(status, __FILE__, __LINE__);
         
-        printf("system stiffness matrix is %dx%d (=%d)"
+        printf("system stiffness matrix is %dx%d (=%d) "
                 "has %d nonzero entries\n",
                 mesh->nnodes, mesh->nnodes,
                 mesh->nnodes * mesh->nnodes,
@@ -209,7 +209,7 @@ static struct errors element_errors(struct problem_spec *spec,
 		elem_errors.L2norm += pow(fabs(u_exact - u_fem), 2.0);
 		elem_errors.energy += (u_exact - u_fem) * spec->f(X, Y);
 
-                if (abs(u_exact - u_fem) > elem_errors.Linfty)
+		if (abs(u_exact - u_fem) > elem_errors.Linfty)
 			elem_errors.Linfty = fabs(u_exact - u_fem);
 		qdat++;
         }

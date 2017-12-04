@@ -36,6 +36,7 @@ void show_usage(char *progname)
 
 int main(int argc, char **argv)
 {
+	int circ_pts = 30;
 	int d;
 	char *endptr;
 	double a;
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
 	struct problem_spec *triangle_with_hole(void);
 	struct problem_spec *square(void);
 	struct problem_spec *three_holes(int n);
+	struct problem_spec *annulus(int n);
 
 	if (argc != 3)
 		show_usage(argv[0]);
@@ -56,10 +58,23 @@ int main(int argc, char **argv)
 	a = strtod(argv[2], &endptr);
 	if (*endptr != '\0' || a <= 0.0)
 		show_usage(argv[0]);
-	
+
 	spec = square();
+	do_demo(spec, a, d, "square.gv");
+
+	printf("\n");
+	spec = triangle_with_hole();
 	do_demo(spec, a, d, "triangle_with_hole.gv");
-	//free_spec(spec);
+	
+	printf("\n");
+	spec = three_holes(circ_pts);
+	do_demo(spec, a, d, "three_holes.gv");
+	free_spec(spec);
+
+	printf("\n");
+	spec = annulus(circ_pts);
+	do_demo(spec, a, d, "annulus.gv");
+	free_spec(spec);
 
 	return 0;
 }
