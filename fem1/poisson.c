@@ -85,79 +85,79 @@ static void compute_element_stiffness(struct elem *ep,
 
 void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
 {
-        double k[3][4];
-        int *Ti, *Tj, *Ai, *Ap;
-        double *Tx, *Ax, *F, *U;
-        int status;
-        void *Symbolic = NULL;
-        void *Numeric = NULL;
-        int s;
-        struct TWB_qdat *qdat = twb_qdat(&d, NULL);	
+	double k[3][4];
+	int *Ti, *Tj, *Ai, *Ap;
+	double *Tx, *Ax, *F, *U;
+	int status;
+	void *Symbolic = NULL;
+	void *Numeric = NULL;
+	int s;
+	struct TWB_qdat *qdat = twb_qdat(&d, NULL);	
 
-        make_vector(Ti, 3*3*mesh->nelems);
-        make_vector(Tj, 3*3*mesh->nelems);
-        make_vector(Tx, 3*3*mesh->nelems);
+	make_vector(Ti, 3*3*mesh->nelems);
+	make_vector(Tj, 3*3*mesh->nelems);
+	make_vector(Tx, 3*3*mesh->nelems);
 
-        make_vector(Ap, 1 + mesh->nnodes);
-        make_vector(Ai, 3*3*mesh->nelems);
-        make_vector(Ax, 3*3*mesh->nelems);
+	make_vector(Ap, 1 + mesh->nnodes);
+	make_vector(Ai, 3*3*mesh->nelems);
+	make_vector(Ax, 3*3*mesh->nelems);
 
 	make_vector(F, mesh->nnodes);
 	make_vector(U, mesh->nnodes);
 	
-        for (int i = 0; i < mesh->nnodes; i++)
-                F[i] = 0.0;
+	for (int i = 0; i < mesh->nnodes; i++)
+		F[i] = 0.0;
 
-        s = 0;
+	s = 0;
 	
-        for (int r = 0; r < mesh->nelems; r++) {
-                struct elem *ep = &mesh->elems[r];
-                compute_element_stiffness(ep, qdat, spec->f, k);
-                enforce_zero_dirichlet_bc(ep, k);
+	for (int r = 0; r < mesh->nelems; r++) {
+		struct elem *ep = &mesh->elems[r];
+		compute_element_stiffness(ep, qdat, spec->f, k);
+		enforce_zero_dirichlet_bc(ep, k);
 
-                for (int i = 0; i < 3; i++) {
-                        int I = ep->n[i]->nodeno;
-                        for (int j = 0; j < 3; j++) {
-                                if (k[i][j] != 0.0) {
-                                        int J = ep->n[j]->nodeno;
-                                        Ti[s] = I;
-                                        Tj[s] = J;
-                                        Tx[s] = k[i][j];
-                                        s++;
-                                }
-                        }
-                        F[I] += k[i][3];
-                }
-        }
+		for (int i = 0; i < 3; i++) {
+			int I = ep->n[i]->nodeno;
+			for (int j = 0; j < 3; j++) {
+				if (k[i][j] != 0.0) {
+					int J = ep->n[j]->nodeno;
+					Ti[s] = I;
+					Tj[s] = J;
+					Tx[s] = k[i][j];
+					s++;
+				}
+			}
+			F[I] += k[i][3];
+		}
+	}
 
-        status = umfpack_di_triplet_to_col(
+	status = umfpack_di_triplet_to_col(
 		mesh->nnodes, mesh->nnodes, s, 
-                Ti, Tj, Tx, Ap, Ai, Ax, NULL);
-        if (status != UMFPACK_OK)
-                error_and_exit(status, __FILE__, __LINE__);
+		Ti, Tj, Tx, Ap, Ai, Ax, NULL);
+	if (status != UMFPACK_OK)
+		error_and_exit(status, __FILE__, __LINE__);
         
-        printf("system stiffness matrix is %dx%d (=%d) "
-                "has %d nonzero entries\n",
-                mesh->nnodes, mesh->nnodes,
-                mesh->nnodes * mesh->nnodes,
-                Ap[mesh->nnodes]);
+	printf("system stiffness matrix is %dx%d (=%d) "
+		"has %d nonzero entries\n",
+		mesh->nnodes, mesh->nnodes,
+		mesh->nnodes * mesh->nnodes,
+		Ap[mesh->nnodes]);
         
-        //symbolic analysis
-        status = umfpack_di_symbolic(
-                mesh->nnodes, mesh->nnodes,
-                Ap, Ai, Ax, &Symbolic, NULL, NULL);
-        if (status != UMFPACK_OK)
-                error_and_exit(status, __FILE__, __LINE__);
+	//symbolic analysis
+	status = umfpack_di_symbolic(
+		mesh->nnodes, mesh->nnodes,
+		Ap, Ai, Ax, &Symbolic, NULL, NULL);
+	if (status != UMFPACK_OK)
+		error_and_exit(status, __FILE__, __LINE__);
         
         //numeric analysis
-        status = umfpack_di_numeric(
+	status = umfpack_di_numeric(
 		Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
 	if (status != UMFPACK_OK)
 		error_and_exit(status, __FILE__, __LINE__);
 
         //solve the system
-        status = umfpack_di_solve(UMFPACK_A,
-                Ap, Ai, Ax, U, F, Numeric, NULL, NULL);
+	status = umfpack_di_solve(UMFPACK_A,
+		Ap, Ai, Ax, U, F, Numeric, NULL, NULL);
                 
 	if (status != UMFPACK_OK)
 		error_and_exit(status, __FILE__, __LINE__);
@@ -192,17 +192,17 @@ static struct errors element_errors(struct problem_spec *spec,
                 y[i] = ep->n[i]->y;
         }
 
-        while (qdat->weight != -1) {
-                double lambda[3];
-                lambda[0] = qdat->lambda1;
-                lambda[1] = qdat->lambda2;
-                lambda[2] = qdat->lambda3;
-                double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
-                double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
+	while (qdat->weight != -1) {
+		double lambda[3];
+		lambda[0] = qdat->lambda1;
+		lambda[1] = qdat->lambda2;
+		lambda[2] = qdat->lambda3;
+		double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
+		double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
 
-		u_exact = spec->u_exact(X, Y);
-                for (int i = 0; i < 3; i++) 
-                	u_fem += lambda[i] * ep->n[i]->z;
+		u_exact = spec->u_exact(X, Y);	
+		for (int i = 0; i < 3; i++) 
+			u_fem += lambda[i] * ep->n[i]->z;
 
 		elem_errors.L2norm += qdat->weight* pow(u_exact - u_fem, 2.0);
 		elem_errors.energy += qdat->weight*(u_exact - u_fem) * spec->f(X, Y);
@@ -212,12 +212,12 @@ static struct errors element_errors(struct problem_spec *spec,
 
 		qdat++;
 		u_fem = 0;
-        }
+	}
 
 	elem_errors.L2norm *= fabs(ep->area / TWB_STANDARD_AREA);
 	elem_errors.energy *= fabs(ep->area / TWB_STANDARD_AREA);
 
-        return elem_errors;
+	return elem_errors;
 }
 
 struct errors eval_errors(struct problem_spec *spec,
