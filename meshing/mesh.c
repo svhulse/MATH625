@@ -214,4 +214,3 @@ void free_mesh(struct mesh *mesh)
 	free_vector(mesh->elems);
 	free(mesh);
 }
-

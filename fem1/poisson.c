@@ -36,12 +36,11 @@ static void enforce_zero_dirichlet_bc(struct elem *ep,
 {
         for (int i = 0; i < 3; i++) {
                 if (ep->n[i]->bc == FEM_BC_DIRICHLET) {
-                        for (int j = 0; j < 3; j++) {
-                                k[i][j] = 0;
-                                k[j][i] = 0;
-                        }
-                        k[i][3] = 0;
-                        k[i][i] = 1;
+			for (int j = 0; j < 4; j++)
+				k[i][j] = 0;
+			for (int j = 0; j < 3; j++)
+				k[j][i] = 0;
+			k[i][i] = 1;
                 }
         }
 }
@@ -79,8 +78,8 @@ static void compute_element_stiffness(struct elem *ep,
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			k[i][j] = (1 / 4*ep->area);
-			k[i][j] *= ep->ex[i] * ep->ey[j];
+			k[i][j] = 1.0 / 4*ep->area;
+			k[i][j] *= ep->ex[i]*ep->ex[j] + ep->ey[i]*ep->ey[j];
 		}
 	}
 }
@@ -115,6 +114,7 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
                 struct elem *ep = &mesh->elems[r];
                 compute_element_stiffness(ep, qdat, spec->f, k);
                 enforce_zero_dirichlet_bc(ep, k);
+
                 for (int i = 0; i < 3; i++) {
                         int I = ep->n[i]->nodeno;
                         for (int j = 0; j < 3; j++) {
@@ -231,6 +231,7 @@ struct errors eval_errors(struct problem_spec *spec,
 		struct errors elem_errs = element_errors(spec, qdat, ep);
 		errs.L2norm += elem_errs.L2norm;
 		errs.energy += elem_errs.energy;
+
 		if (elem_errs.Linfty > errs.Linfty)
 			errs.Linfty = elem_errs.Linfty;
 	}

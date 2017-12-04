@@ -21,7 +21,7 @@ struct problem_spec *square(void)
 		{0,	0.0,	0.0,	FEM_BC_DIRICHLET},
 		{1,	1.0,	0.0,	FEM_BC_DIRICHLET},
 		{2,	1.0,	1.0,	FEM_BC_DIRICHLET},
-		{3, 0.0,	1.0,	FEM_BC_DIRICHLET},
+		{3, 	0.0,	1.0,	FEM_BC_DIRICHLET},
 	};
 
 	static struct problem_spec_segment segments[] = {

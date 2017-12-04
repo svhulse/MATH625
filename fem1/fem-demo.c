@@ -8,20 +8,22 @@
 static void do_demo(struct problem_spec *spec,
     double a, int d, char *gv_filename)
 {
-    struct mesh *mesh;
-    mesh = make_mesh(spec, a);
-    printf("nodes = %d, edges = %d, elems = %d\n",
-        mesh->nnodes, mesh->nedges, mesh->nelems);
-    poisson_solve(spec, mesh, d);
+	struct mesh *mesh;
+	mesh = make_mesh(spec, a);
+	
+	printf("nodes = %d, edges = %d, elems = %d\n",
+		mesh->nnodes, mesh->nedges, mesh->nelems);
+	
+	poisson_solve(spec, mesh, d);
 
-    if (spec->u_exact != NULL) {
-        struct errors errs = eval_errors(spec, mesh, d);
-        printf("errors: L^infty = %g, L^2 = %g, energy norm = %g\n",
-            errs.Linfty, errs.L2norm, errs.energy);
-    }
+	if (spec->u_exact != NULL) {
+		struct errors errs = eval_errors(spec, mesh, d);
+		printf("errors: L^infty = %g, L^2 = %g, energy norm = %g\n",
+		errs.Linfty, errs.L2norm, errs.energy);
+    	}
 
-    plot_with_geomview_zhue(mesh, gv_filename);
-    free_mesh(mesh);
+    	plot_with_geomview_zhue(mesh, gv_filename);
+    	free_mesh(mesh);
 }
 
 void show_usage(char *progname)
@@ -38,6 +40,7 @@ int main(int argc, char **argv)
 	char *endptr;
 	double a;
 	struct problem_spec *spec;
+	
 	void free_spec(struct problem_spec *spec);
 	struct problem_spec *triangle_with_hole(void);
 	struct problem_spec *square(void);
@@ -53,14 +56,10 @@ int main(int argc, char **argv)
 	a = strtod(argv[2], &endptr);
 	if (*endptr != '\0' || a <= 0.0)
 		show_usage(argv[0]);
-
-	spec = square();
-	do_demo(spec, a, d, "square.gv");
-	free_spec(spec);
 	
-	spec = three_holes(20);
-	do_demo(spec, a, d, "three-holes.gv");
-	free_spec(spec);
+	spec = square();
+	do_demo(spec, a, d, "triangle_with_hole.gv");
+	//free_spec(spec);
 
 	return 0;
 }
