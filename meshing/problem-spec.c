@@ -45,7 +45,7 @@ struct problem_spec *square(void)
 		.u_exact	= square_u_exact,
 	};
 
-	printf("Square\n");
+	printf("Domain is a square\n");
 	return &spec;
 }
 
@@ -73,12 +73,12 @@ struct problem_spec *three_holes(int n)
 	points[4] = (struct problem_spec_point) {4, -s,		-s,	FEM_BC_DIRICHLET};
 	points[5] = (struct problem_spec_point) {5, 0,		-s,	FEM_BC_DIRICHLET};
 
-	segments[0] = (struct problem_spec_segment) {0,	0,	1,	FEM_BC_DIRICHLET};
-	segments[1] = (struct problem_spec_segment) {1,	1,	2,	FEM_BC_DIRICHLET};
-	segments[2] = (struct problem_spec_segment) {2,	2,	3,	FEM_BC_DIRICHLET};
-	segments[3] = (struct problem_spec_segment) {3,	3,	4,	FEM_BC_DIRICHLET};
-	segments[4] = (struct problem_spec_segment) {4,	4,	5,	FEM_BC_DIRICHLET};
-	segments[5] = (struct problem_spec_segment) {5,	5,	0,	FEM_BC_DIRICHLET};
+	segments[0] = (struct problem_spec_segment) {0,	0, 1, FEM_BC_DIRICHLET};
+	segments[1] = (struct problem_spec_segment) {1,	1, 2, FEM_BC_DIRICHLET};
+	segments[2] = (struct problem_spec_segment) {2,	2, 3, FEM_BC_DIRICHLET};
+	segments[3] = (struct problem_spec_segment) {3,	3, 4, FEM_BC_DIRICHLET};
+	segments[4] = (struct problem_spec_segment) {4,	4, 5, FEM_BC_DIRICHLET};
+	segments[5] = (struct problem_spec_segment) {5,	5, 0, FEM_BC_DIRICHLET};
 	
 	//Make the first hole at (-0.25, -0.25)
 	for (int i = 6; i < n+6; i++) {
@@ -151,7 +151,7 @@ struct problem_spec *three_holes(int n)
 	spec -> eta 		= NULL;
 	spec -> u_exact 	= NULL;
 
-	printf("Square with holes\n");
+	printf("Domain is a square with 3 holes\n");
 	return spec;
 }
 
@@ -202,7 +202,7 @@ struct problem_spec *triangle_with_hole(void)
 		.u_exact	= NULL,
 	};
 
-	printf("Triangle with a hole\n");
+	printf("Domain is a triangle with a hole\n");
 	return &spec;
 }
 
@@ -278,7 +278,7 @@ struct problem_spec *annulus(int n)
 	spec -> eta 		= NULL;
 	spec -> u_exact 	= NULL;
 
-	printf("An %d-sided annulus\n", n);
+	printf("Domain is a %d-sided annulus\n", n);
 	return spec;
 }
 

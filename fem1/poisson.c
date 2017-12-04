@@ -73,7 +73,7 @@ static void compute_element_stiffness(struct elem *ep,
         }
 
         for (int i = 0; i < 3; i++)
-                k[i][3] *= ep->area / TWB_STANDARD_AREA;
+                k[i][3] *= fabs(ep->area / TWB_STANDARD_AREA);
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
@@ -148,7 +148,6 @@ void poisson_solve(struct problem_spec *spec, struct mesh *mesh, int d)
                 Ap, Ai, Ax, &Symbolic, NULL, NULL);
         if (status != UMFPACK_OK)
                 error_and_exit(status, __FILE__, __LINE__);
-
         
         //numeric analysis
         status = umfpack_di_numeric(
@@ -201,21 +200,22 @@ static struct errors element_errors(struct problem_spec *spec,
                 double X = lambda[0]*x[0] + lambda[1]*x[1] + lambda[2]*x[2];
                 double Y = lambda[0]*y[0] + lambda[1]*y[1] + lambda[2]*y[2];
 
-                for (int i = 0; i < 3; i++) {
-			u_exact += spec->u_exact(X, Y);
+		u_exact = spec->u_exact(X, Y);
+                for (int i = 0; i < 3; i++) 
                 	u_fem += lambda[i] * ep->n[i]->z;
-		}
 
-		elem_errors.L2norm += pow(fabs(u_exact - u_fem), 2.0);
-		elem_errors.energy += (u_exact - u_fem) * spec->f(X, Y);
+		elem_errors.L2norm += qdat->weight* pow(u_exact - u_fem, 2.0);
+		elem_errors.energy += qdat->weight*(u_exact - u_fem) * spec->f(X, Y);
 
-		if (abs(u_exact - u_fem) > elem_errors.Linfty)
+		if (fabs(u_exact - u_fem) > elem_errors.Linfty)
 			elem_errors.Linfty = fabs(u_exact - u_fem);
+
 		qdat++;
+		u_fem = 0;
         }
 
-	elem_errors.L2norm *= ep->area / TWB_STANDARD_AREA;
-	elem_errors.energy *= ep->area / TWB_STANDARD_AREA;
+	elem_errors.L2norm *= fabs(ep->area / TWB_STANDARD_AREA);
+	elem_errors.energy *= fabs(ep->area / TWB_STANDARD_AREA);
 
         return elem_errors;
 }
