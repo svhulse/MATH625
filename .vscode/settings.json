@@ -1,5 +1,6 @@
 {
 	"files.associations": {
-		"plot-with-geomview.h": "c"
+		"plot-with-geomview.h": "c",
+		"array.h": "c"
 	}
 }

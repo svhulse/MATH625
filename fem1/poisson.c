@@ -204,8 +204,8 @@ static struct errors element_errors(struct problem_spec *spec,
 		for (int i = 0; i < 3; i++) 
 			u_fem += lambda[i] * ep->n[i]->z;
 
-		elem_errors.L2norm += qdat->weight* pow(u_exact - u_fem, 2.0);
-		elem_errors.energy += qdat->weight*(u_exact - u_fem) * spec->f(X, Y);
+		elem_errors.L2norm += qdat->weight * pow(u_exact - u_fem, 2.0);
+		elem_errors.energy += qdat->weight * (u_exact - u_fem) * spec->f(X, Y);
 
 		if (fabs(u_exact - u_fem) > elem_errors.Linfty)
 			elem_errors.Linfty = fabs(u_exact - u_fem);
