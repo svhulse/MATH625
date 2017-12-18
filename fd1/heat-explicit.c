@@ -67,18 +67,23 @@ static void heat_explicit(struct problem_spec *spec,
 		double x = spec->a + (spec->b - spec->a)/(n+1)*j;
 		u[j] = spec->ic(x);
 	}
-
+	
 	plot_curve(fp, u, n, steps, 0);
 
 	for (int k = 1; k <= steps; k++) {
-		for (int i = 0; i < n+1; i++)
+		double *tmp;
+
+		for (int i = 0; i < n; i++)
 			v[i+1] = r*u[i] + (1-2*r)*u[i+1] + r*u[i+2];
 
 		double t = T*k/steps;
 		v[0] = spec->bcL(t);
 		v[n+1] = spec->bcR(t);
-		u = v;
-	
+
+		tmp = v;
+		v = u;
+		u = tmp;
+
 		plot_curve(fp, u, n, steps, k);
 	}
 
@@ -104,33 +109,25 @@ int main(int argc, char **argv)
 	double T;
 	int n, steps;
 
-	if (argc != 4) {
+	if (argc != 4)
 		show_usage(argv[0]);
-		return EXIT_FAILURE;
-	}
 
 	T = strtod(argv[1], &endptr);
-	if (*endptr != '\0' || T <= 0.0) {
+	if (*endptr != '\0' || T <= 0.0) 
 		show_usage(argv[0]);
-		return EXIT_FAILURE;
-	}
 
 	n = strtol(argv[2], &endptr, 10);
-	if (*endptr != '\0' || n < 1) {
+	if (*endptr != '\0' || n < 1)
 		show_usage(argv[0]);
-		return EXIT_FAILURE;
-	}
 
 	steps = strtol(argv[3], &endptr, 10);
-	if (*endptr != '\0' || steps < 0) {
+	if (*endptr != '\0' || steps < 0)
 		show_usage(argv[0]);
-		return EXIT_FAILURE;
-	}
 
-	heat_explicit(heat1(), T, n, steps, "im1.gv");
-	//heat_implicit(heat2(), T, n, steps, "im2.gv");
-	//heat_implicit(heat3(), T, n, steps, "im3.gv");
-	//heat_implicit(heat4(), T, n, steps, "im4.gv");
+	heat_explicit(heat1(), T, n, steps, "ex1.gv");
+	heat_explicit(heat2(), T, n, steps, "ex2.gv");
+	heat_explicit(heat3(), T, n, steps, "ex3.gv");
+	heat_explicit(heat4(), T, n, steps, "ex4.gv");
 
 	return EXIT_SUCCESS;
 }

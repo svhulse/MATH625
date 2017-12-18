@@ -97,6 +97,7 @@ static void heat_implicit(struct problem_spec *spec,
 			d[i] = 1 + 2*r;
 		trisolve(n, c, d, c, u+1, v+1);
 		tmp = v;
+		v = u;
 		u = tmp;
 		plot_curve(fp, u, n, steps, k);
 	}
@@ -148,9 +149,9 @@ int main(int argc, char **argv)
 	}
 
 	heat_implicit(heat1(), T, n, steps, "im1.gv");
-	//heat_implicit(heat2(), T, n, steps, "im2.gv");
-	//heat_implicit(heat3(), T, n, steps, "im3.gv");
-	//heat_implicit(heat4(), T, n, steps, "im4.gv");
+	heat_implicit(heat2(), T, n, steps, "im2.gv");
+	heat_implicit(heat3(), T, n, steps, "im3.gv");
+	heat_implicit(heat4(), T, n, steps, "im4.gv");
 
 	return EXIT_SUCCESS;
 }

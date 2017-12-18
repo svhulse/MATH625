@@ -48,7 +48,7 @@ void show_usage(char *progname)
 	exit(EXIT_FAILURE);
 }
 
-static void heat_implicit(struct problem_spec *spec,
+static void heat_crank_nicolson(struct problem_spec *spec,
 	double T, int n, int steps, char *gv_filename)
 {
 	FILE *fp;
@@ -86,18 +86,25 @@ static void heat_implicit(struct problem_spec *spec,
 	for (int j = 0; j < n-1; j++)
 		c[j] = -r;
 
+	for (int i = 0; i < n; i++)
+		d[i] = 1 + 2*r;
+
 	for (int k = 1; k <= steps; k++) {
 		double *tmp;
 		double t = T*k/steps;
+
+		for (int i = 0; i < n; i++)
+			v[i+1] = r*u[i] + (1-2*r)*u[i+1] + r*u[i+2];
+
 		v[0] = spec->bcL(t);
 		v[n+1] = spec->bcR(t);
-		u[1] += r*v[0];
-		u[n] += r*v[n+1];
-		for (int i = 0; i < n; i++)
-			d[i] = 1 + 2*r;
+
 		trisolve(n, c, d, c, u+1, v+1);
+
 		tmp = v;
+		v = u;
 		u = tmp;
+
 		plot_curve(fp, u, n, steps, k);
 	}
 
@@ -147,10 +154,10 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	heat_implicit(heat1(), T, n, steps, "im1.gv");
-	//heat_implicit(heat2(), T, n, steps, "im2.gv");
-	//heat_implicit(heat3(), T, n, steps, "im3.gv");
-	//heat_implicit(heat4(), T, n, steps, "im4.gv");
+	heat_crank_nicolson(heat1(), T, n, steps, "im1.gv");
+	heat_crank_nicolson(heat2(), T, n, steps, "im2.gv");
+	heat_crank_nicolson(heat3(), T, n, steps, "im3.gv");
+	heat_crank_nicolson(heat4(), T, n, steps, "im4.gv");
 
 	return EXIT_SUCCESS;
 }
