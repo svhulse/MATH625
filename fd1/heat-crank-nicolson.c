@@ -52,7 +52,7 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 	double T, int n, int steps, char *gv_filename)
 {
 	FILE *fp;
-	double *u, *v, *d, *c, *w;
+	double *u, *v, *d, *c, *b;
 	double dx = (spec->b - spec->a)/(n+1);
 	double dt = T/steps;
 	double r = dt/(dx*dx);;
@@ -73,7 +73,7 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 
 	make_vector(u, n+2);
 	make_vector(v, n+2);
-	make_vector(w, n+2);
+	make_vector(b, n+2);
 	make_vector(d, n);
 	make_vector(c, n-1);
 
@@ -81,6 +81,9 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 		double x = spec->a + (spec->b - spec->a)/(n+1)*j;
 		u[j] = spec->ic(x);
 	}
+	
+	for (int j = 0; j < n-1; j++)
+		c[j] = -r;
 
 	plot_curve(fp, u, n, steps, 0);
 
@@ -89,18 +92,15 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 		double t = T*k/steps;
 
 		for (int i = 0; i < n; i++)
-			w[i+1] = r*u[i] + 2*(1-r)*u[i+1] + r*u[i+2];
+			b[i+1] = r*u[i] + 2*(1-r)*u[i+1] + r*u[i+2];
 
 		for (int i = 0; i < n; i++)
 			d[i] = 2*(1 + r);
-		
-		for (int j = 0; j < n-1; j++)
-			c[j] = -r;
 
-		w[1] += r*spec->bcL(t+1);
-		w[n] += r*spec->bcR(t+1);
+		b[1] += r*spec->bcL(t+1);
+		b[n] += r*spec->bcR(t+1);
 
-		trisolve(n, c, d, c, w+1, v+1);
+		trisolve(n, c, d, c, b+1, v+1);
 
 		v[0] = spec->bcL(t);
 		v[n+1] = spec->bcR(t);
