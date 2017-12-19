@@ -52,7 +52,7 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 	double T, int n, int steps, char *gv_filename)
 {
 	FILE *fp;
-	double *u, *v, *d, *c;
+	double *u, *v, *d, *c, *w;
 	double dx = (spec->b - spec->a)/(n+1);
 	double dt = T/steps;
 	double r = dt/(dx*dx);;
@@ -73,6 +73,7 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 
 	make_vector(u, n+2);
 	make_vector(v, n+2);
+	make_vector(w, n+2);
 	make_vector(d, n);
 	make_vector(c, n-1);
 
@@ -83,23 +84,26 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 
 	plot_curve(fp, u, n, steps, 0);
 
-	for (int j = 0; j < n-1; j++)
-		c[j] = -r;
-
-	for (int i = 0; i < n; i++)
-		d[i] = 1 + 2*r;
-
 	for (int k = 1; k <= steps; k++) {
 		double *tmp;
 		double t = T*k/steps;
 
 		for (int i = 0; i < n; i++)
-			v[i+1] = r*u[i] + (1-2*r)*u[i+1] + r*u[i+2];
+			w[i+1] = r*u[i] + 2*(1-r)*u[i+1] + r*u[i+2];
+
+		for (int i = 0; i < n; i++)
+			d[i] = 2*(1 + r);
+		
+		for (int j = 0; j < n-1; j++)
+			c[j] = -r;
+
+		w[1] += r*spec->bcL(t+1);
+		w[n] += r*spec->bcR(t+1);
+
+		trisolve(n, c, d, c, w+1, v+1);
 
 		v[0] = spec->bcL(t);
 		v[n+1] = spec->bcR(t);
-
-		trisolve(n, c, d, c, u+1, v+1);
 
 		tmp = v;
 		v = u;
@@ -110,11 +114,13 @@ static void heat_crank_nicolson(struct problem_spec *spec,
 
 	fprintf(fp, "}\n");
 	fclose(fp);
-	printf("geomview scripy written to file %s\n", gv_filename);
+
 	if (spec->u_exact != NULL) {
 		double err = get_error(spec, u, n, T);
 		printf("max error at time %g is %g\n", T, err);
 	}
+
+	printf("geomview scripy written to file %s\n\n", gv_filename);
 
 	free_vector(u);
 	free_vector(v);
@@ -154,10 +160,10 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	heat_crank_nicolson(heat1(), T, n, steps, "im1.gv");
-	heat_crank_nicolson(heat2(), T, n, steps, "im2.gv");
-	heat_crank_nicolson(heat3(), T, n, steps, "im3.gv");
-	heat_crank_nicolson(heat4(), T, n, steps, "im4.gv");
+	heat_crank_nicolson(heat1(), T, n, steps, "cn1.gv");
+	heat_crank_nicolson(heat2(), T, n, steps, "cn2.gv");
+	heat_crank_nicolson(heat3(), T, n, steps, "cn3.gv");
+	heat_crank_nicolson(heat4(), T, n, steps, "cn4.gv");
 
 	return EXIT_SUCCESS;
 }

@@ -104,11 +104,13 @@ static void heat_implicit(struct problem_spec *spec,
 
 	fprintf(fp, "}\n");
 	fclose(fp);
-	printf("geomview scripy written to file %s\n", gv_filename);
+	
 	if (spec->u_exact != NULL) {
 		double err = get_error(spec, u, n, T);
 		printf("max error at time %g is %g\n", T, err);
 	}
+
+	printf("geomview scripy written to file %s\n\n", gv_filename);
 
 	free_vector(u);
 	free_vector(v);

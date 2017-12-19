@@ -72,11 +72,11 @@ static void heat_explicit(struct problem_spec *spec,
 
 	for (int k = 1; k <= steps; k++) {
 		double *tmp;
+		double t = T*k/steps;
 
 		for (int i = 0; i < n; i++)
 			v[i+1] = r*u[i] + (1-2*r)*u[i+1] + r*u[i+2];
 
-		double t = T*k/steps;
 		v[0] = spec->bcL(t);
 		v[n+1] = spec->bcR(t);
 
@@ -89,11 +89,13 @@ static void heat_explicit(struct problem_spec *spec,
 
 	fprintf(fp, "}\n");
 	fclose(fp);
-	printf("geomview scripy written to file %s\n", gv_filename);
+	
 	if (spec->u_exact != NULL) {
 		double err = get_error(spec, u, n, T);
 		printf("max error at time %g is %g\n", T, err);
 	}
+
+	printf("geomview scripy written to file %s\n\n", gv_filename);
 
 	free_vector(u);
 	free_vector(v);
